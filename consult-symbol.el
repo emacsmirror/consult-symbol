@@ -1,12 +1,27 @@
 ;;; consult-symbol.el --- Consult-based symbol search with narrowing -*- lexical-binding: t; -*-
 
-;; Author: Daniel Fleischer
-;; Version: 0.1
-;; Package-Requires: ((emacs "29.1") (consult "2.0") (marginalia "1.0"))
+;; Copyright (C) 2026  Daniel Fleischer
+
+;; Author: Daniel Fleischer <danflscr@gmail.com>
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "27.1") (consult "2.0") (marginalia "1.0"))
 ;; Keywords: convenience, matching
 ;; URL: https://github.com/danielfleischer/consult-symbol
 
 ;; This file is not part of GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -14,10 +29,6 @@
 ;; Emacs symbols with narrowing by category (command, function,
 ;; variable, macro, face, etc.).  Built on top of the consult
 ;; completing-read framework.
-;;
-;; Suggested keybinding:
-;;
-;;   (keymap-global-set "C-c j" #'consult-symbol)
 
 ;;; Code:
 
@@ -38,11 +49,11 @@ The function receives a symbol as its argument."
 
 (defcustom consult-symbol-doc-width 80
   "Maximum width for docstring truncation in annotations."
-  :type 'natnum)
+  :type 'integer)
 
 (defcustom consult-symbol-value-width 30
   "Maximum width for variable value display in annotations."
-  :type 'natnum)
+  :type 'integer)
 
 (defcustom consult-symbol-face-sample "AaBbCc"
   "Sample text used for face preview in annotations."
@@ -52,9 +63,7 @@ The function receives a symbol as its argument."
   "Whether to include internal symbols (those containing \"--\")."
   :type 'boolean)
 
-;;;; Narrowing categories
-
-(defvar consult-symbol--types
+(defcustom consult-symbol-types
   '((?c . "Command")
     (?f . "Function")
     (?m . "Macro")
@@ -64,7 +73,10 @@ The function receives a symbol as its argument."
     (?a . "Face")
     (?G . "Custom Group")
     (?t . "CL Type"))
-  "Alist of narrowing keys and category labels for symbol types.")
+  "Alist of narrowing keys and category labels for symbol types.
+Each entry is (CHARACTER . LABEL).  The character is used as the
+narrowing key and the label is displayed in the group header."
+  :type '(alist :key-type character :value-type string))
 
 ;;;; History
 
@@ -107,11 +119,14 @@ Maps the primary class to one of the narrowing categories."
 
 (defun consult-symbol--default-action (sym)
   "Default action for selected symbol SYM.
-Uses `customize-group' for custom groups, `describe-face' for faces,
-`helpful-symbol' when available, and `describe-symbol' as fallback."
+Uses `customize-group' for pure custom groups, `describe-face' for
+pure faces, `helpful-symbol' when available, and `describe-symbol'
+as fallback."
   (cond
-   ((get sym 'group-documentation) (customize-group sym))
-   ((facep sym) (describe-face sym))
+   ((and (get sym 'group-documentation) (not (fboundp sym)) (not (boundp sym)))
+    (customize-group sym))
+   ((and (facep sym) (not (fboundp sym)) (not (boundp sym)))
+    (describe-face sym))
    ((fboundp 'helpful-symbol) (helpful-symbol sym))
    (t (describe-symbol sym))))
 
@@ -186,12 +201,12 @@ variables, custom variables, faces, custom groups, and CL types."
          (selected (consult--read
                     candidates
                     :prompt "Symbol: "
-                    :narrow (consult--type-narrow consult-symbol--types)
-                    :group (consult--type-group consult-symbol--types)
+                    :narrow (consult--type-narrow consult-symbol-types)
+                    :group (consult--type-group consult-symbol-types)
                     :annotate #'consult-symbol--annotate
                     :category 'consult-symbol
                     :require-match t
-                    :sort nil
+                    :sort t
                     :default (thing-at-point 'symbol)
                     :history 'consult-symbol--history
                     :lookup (lambda (sel cands &rest _) (intern-soft sel)))))
