@@ -83,7 +83,10 @@ narrowing key and the label is displayed in the group header."
 (defvar consult-symbol--history nil
   "History variable for `consult-symbol'.")
 
-(add-to-list 'savehist-additional-variables 'consult-symbol--history)
+(unless (or (not (bound-and-true-p savehist-mode))
+            (memq 'consult-symbol--history (bound-and-true-p savehist-ignored-variables)))
+  (defvar savehist-minibuffer-history-variables)
+  (add-to-list 'savehist-minibuffer-history-variables 'consult-symbol--history))
 
 ;;;; Candidate collection
 
