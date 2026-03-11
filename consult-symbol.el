@@ -212,7 +212,7 @@ variables, custom variables, faces, custom groups, and CL types."
                     :sort t
                     :default (thing-at-point 'symbol)
                     :history 'consult-symbol--history
-                    :lookup (lambda (sel cands &rest _) (intern-soft sel)))))
+                    :lookup (lambda (sel _ &rest _) (intern-soft sel)))))
     (when selected
       (funcall consult-symbol-action selected))))
 
