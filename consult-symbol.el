@@ -199,18 +199,22 @@ as fallback."
 Symbols are grouped into commands, functions, macros, special forms,
 variables, custom variables, faces, custom groups, and CL types."
   (interactive)
-  (let* ((candidates (consult--slow-operation "Collecting symbols..."
+  (let* ((default (thing-at-point 'symbol))
+         (prompt (if default
+                     (format "Symbol (default %s): " default)
+                   "Symbol: "))
+         (candidates (consult--slow-operation "Collecting symbols..."
                        (consult-symbol--candidates)))
          (selected (consult--read
                     candidates
-                    :prompt "Symbol: "
+                    :prompt prompt
                     :narrow (consult--type-narrow consult-symbol-types)
                     :group (consult--type-group consult-symbol-types)
                     :annotate #'consult-symbol--annotate
                     :category 'consult-symbol
                     :require-match t
                     :sort t
-                    :default (thing-at-point 'symbol)
+                    :default default
                     :history 'consult-symbol--history
                     :lookup (lambda (sel _ &rest _) (intern-soft sel)))))
     (when selected
