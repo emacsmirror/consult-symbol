@@ -30,6 +30,8 @@
 ;; variable, macro, face, etc.).  Built on top of the consult
 ;; completing-read framework.
 
+;; For embark integration, run `M-x consult-symbol-setup-embark'.
+
 ;;; Code:
 
 (require 'consult)
@@ -46,6 +48,14 @@
   "Action function called with the selected symbol.
 The function receives a symbol as its argument."
   :type 'function)
+
+(defcustom consult-symbol-history 'consult-symbol--history
+  "History variable to use for `consult-symbol'.
+If nil, use the default minibuffer history.
+If a symbol, use that symbol as the history variable."
+  :type '(choice (const :tag "Default minibuffer history" nil)
+                 (const :tag "Dedicated consult-symbol history" consult-symbol--history)
+                 (symbol :tag "Custom history variable")))
 
 (defcustom consult-symbol-doc-width 80
   "Maximum width for docstring truncation in annotations."
@@ -187,7 +197,11 @@ as fallback."
            (t 'symbol))
           cand)))
 
-(when (featurep 'embark)
+(defvar embark-transformer-alist)
+
+(defun consult-symbol-setup-embark ()
+  "Enable embark integration."
+  (interactive)
   (setf (alist-get 'consult-symbol embark-transformer-alist)
         #'consult-symbol--embark-transformer))
 
@@ -215,7 +229,7 @@ variables, custom variables, faces, custom groups, and CL types."
                     :require-match t
                     :sort t
                     :default default
-                    :history 'consult-symbol--history
+                    :history consult-symbol-history
                     :lookup (lambda (sel _ &rest _) (intern-soft sel)))))
     (when selected
       (funcall consult-symbol-action selected))))
