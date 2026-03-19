@@ -164,14 +164,18 @@ as fallback."
     (let* ((doc (consult-symbol--doc sym))
            (val (when (boundp sym)
                   (when-let ((val (ignore-errors (prin1-to-string (symbol-value sym)))))
-                    (truncate-string-to-width
-                     val consult-symbol-value-or-location-width
-                     0 nil t))))
+                    (propertize
+                     (truncate-string-to-width
+                      val consult-symbol-value-or-location-width
+                      0 nil t)
+                     'face 'font-lock-constant-face))))
            (location (when (fboundp sym)
                        (when-let ((loc (ignore-errors (cdr (find-function-library sym)))))
-                         (string-truncate-left
-                          (abbreviate-file-name loc)
-                          consult-symbol-value-or-location-width))))
+                         (propertize
+                          (string-truncate-left
+                           (abbreviate-file-name loc)
+                           consult-symbol-value-or-location-width)
+                          'face 'success))))
            (cls (marginalia--symbol-class sym))
            (mid-fmt (format "%%-%ds" (+ consult-symbol-value-or-location-width 2))))
       (consult--annotate-align
@@ -179,7 +183,7 @@ as fallback."
        (concat cls
                (if (facep sym)
                    (propertize (format mid-fmt consult-symbol-face-sample) 'face sym)
-                 (propertize (format mid-fmt (or val location "")) 'face 'font-lock-constant-face))
+                 (format mid-fmt (or val location "")))
                (when doc
                  (propertize doc 'face 'shadow)))))))
 
