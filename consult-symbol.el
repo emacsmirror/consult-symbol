@@ -129,30 +129,29 @@ as fallback."
 ;;;; Entry point
 
 ;;;###autoload
-(defun consult-symbol ()
+(defun consult-symbol (symbol)
   "Search Emacs symbols with narrowing by category.
 Symbols are grouped into commands, functions, macros, special forms,
 variables, custom variables, faces, custom groups, and CL types."
-  (interactive)
-  (let* ((default (thing-at-point 'symbol))
-         (prompt (if default
-                     (format "Symbol (default %s): " default)
-                   "Symbol: "))
-         (candidates (consult--slow-operation "Collecting symbols..."
-                       (consult-symbol--candidates)))
-         (selected (consult--read
-                    candidates
-                    :prompt prompt
-                    :narrow (consult--type-narrow consult-symbol-types)
-                    :group (consult--type-group consult-symbol-types)
-                    :category 'multi-category
-                    :require-match t
-                    :sort t
-                    :default default
-                    :history consult-symbol-history
-                    :lookup (lambda (sel &rest _) (intern-soft sel)))))
-    (when selected
-      (funcall consult-symbol-action selected))))
+  (interactive
+   (let* ((default (thing-at-point 'symbol))
+          (prompt (if default
+                      (format "Symbol (default %s): " default)
+                    "Symbol: ")))
+     (list
+      (consult--read
+       (consult--slow-operation "Collecting symbols..."
+         (consult-symbol--candidates))
+       :prompt prompt
+       :narrow (consult--type-narrow consult-symbol-types)
+       :group (consult--type-group consult-symbol-types)
+       :category 'multi-category
+       :require-match t
+       :sort t
+       :default default
+       :history consult-symbol-history
+       :lookup (lambda (sel &rest _) (intern-soft sel))))))
+  (funcall consult-symbol-action symbol))
 
 (provide 'consult-symbol)
 ;;; consult-symbol.el ends here
