@@ -17,6 +17,9 @@ across all Emacs symbols — commands, functions, macros, variables, faces,
 custom groups, and more — with category narrowing, rich annotations, and
 history-based sorting.
 
+When point is on a symbol, that symbol is used as the default so you can
+describe it instantly with a single =RET=.
+
 
 [[file:assets/image_1.png]]
 
@@ -40,7 +43,8 @@ history-based sorting.
   preview, and first-line docstring
 - *History sorting* — recently selected symbols appear first
 - *Embark integration* — automatic type detection for embark actions
-- *Customizable* — action function, narrowing categories
+- *Savehist integration* — search history is persisted across sessions via =savehist=
+- *Customizable* — action function, narrowing categories, history variable
 
 * Requirements
 
@@ -80,22 +84,46 @@ Clone this repository and add it to your =load-path=:
 (keymap-global-set "C-h o" #'consult-symbol)
 #+end_src
 
+* Usage
+
+Invoke =M-x consult-symbol= (or your bound key, e.g. =C-h o=).
+
+- Type to filter symbols by name.
+- Press the narrowing key (e.g. =c= for commands, =v= for variables) after the
+  consult narrowing prefix (default =<=) to restrict results to a single category.
+- Press =RET= to run the default action (describe / customize the symbol).
+- With [[https://github.com/oantolin/embark][embark]] installed, press =embark-act= on any candidate for contextual
+  actions appropriate to the symbol's type.
+
+The default action dispatches smartly:
+- Custom groups → =customize-group=
+- Pure faces → =describe-face=
+- Everything else → =helpful-symbol= (if available) or =describe-symbol=
+
 * Embark Integration
 
-=consult-symbol= provides built-in support for [[https://github.com/oantolin/embark][embark]], enabling contextual actions on symbols based on their type. No need
-to set-up anything.
+=consult-symbol= provides built-in support for [[https://github.com/oantolin/embark][embark]], enabling contextual
+actions on symbols based on their type. No configuration is needed — embark
+automatically receives the correct category (=command=, =function=, =variable=,
+=face=, =customize-group=, etc.) for each candidate.
 
 * Customization
 
-All options are under the =consult-symbol= customize group.
+All options are available under the =consult-symbol= customize group:
+
+#+begin_src emacs-lisp
+M-x customize-group RET consult-symbol RET
+#+end_src
 
 - =consult-symbol-action= — function called with the selected symbol (default:
   describe via =helpful-symbol= or =describe-symbol=)
 - =consult-symbol-history= — history variable to use for symbol search
    + =nil= — use default minibuffer history
-   + ='consult-symbol--history= — use dedicated history (default)
-   + Any symbol — use custom history variable
-- =consult-symbol-types= — alist of narrowing keys and category labels
+   + ='consult-symbol--history= — use dedicated history (default, persisted by =savehist=)
+   + Any symbol — use a custom history variable
+- =consult-symbol-types= — alist of narrowing keys and category labels; edit to
+  add, remove, or remap categories
+
 * License
 
 GPL-3.0-or-later
